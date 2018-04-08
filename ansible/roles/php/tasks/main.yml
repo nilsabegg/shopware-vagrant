@@ -1,0 +1,49 @@
+---
+
+- name: Install PHP-FPM
+  when: webserver == "nginx"
+  apt: pkg={{ item }} state=present
+  become: yes
+  with_items:
+  - php7.0-fpm
+- name: Install PHP Mod Apache
+  when: webserver == "apache"
+  apt: pkg={{ item }} state=present
+  become: yes
+  with_items:
+  - libapache2-mod-php7.0
+- name: Install PHP Packages
+  apt: pkg={{ item }} state=present
+  become: yes
+  with_items:
+
+    - php7.0-cli
+    - php7.0-curl
+    - php7.0-gd
+    - php7.0-mysql
+    - php7.0-mbstring
+    - php7.0-simplexml
+    - php7.0-xml
+    - php7.0-zip
+
+    - php-apcu
+    - php-xdebug
+
+- name: Make sure webserver_root exists
+  file:
+    path={{ webserver_root }}
+    state=directory
+    group={{ webserver_group }}
+    owner={{ webserver_user }}
+  become: yes
+
+- name: Copy phpinfo.php
+  template: src={{ item }} dest={{ webserver_root }}/{{ item }} owner={{ webserver_user }} group={{ webserver_group }} mode=0644
+  with_items:
+    - phpinfo.php
+
+- name: Configure PHP-CLI
+  template: src={{ item.template }} dest=/etc/php/{{ item.phpversion }}/cli/conf.d/{{ item.file }} owner=root group=root mode=0644
+  with_items:
+    - { file: '99-debug.ini', phpversion: '7.0', template: '../../common/templates/99-debug.ini' }
+  become: yes

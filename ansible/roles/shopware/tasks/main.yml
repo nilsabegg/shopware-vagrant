@@ -1,0 +1,16 @@
+---
+
+- name: Check that the somefile.conf exists
+  stat:
+    path: "{{ webserver_root }}/../shopware"
+  register: stat_result
+
+- name: Clone Shopware
+  shell: git clone https://github.com/shopware/shopware.git ~/shopware
+  when: stat_result.stat.exists == False 
+
+- name: Update Shopware repository and checkout your desired version.
+  command: "{{ item }} chdir={{ webserver_root }}/../shopware"
+  with_items:
+    - git fetch --all
+    - git checkout tags/{{ shopware_version }}

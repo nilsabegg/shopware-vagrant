@@ -1,0 +1,15 @@
+
+---
+- name: apply common configuration to all nodes
+  hosts: all
+  roles:
+    - common
+    - nodejs
+    - php
+    - mysql
+    - apache
+    - composer
+    - ioncube
+    - grunt
+    - shopware-cli
+    - shopware

@@ -1,0 +1,85 @@
+---
+
+- name: Set /var/lock/apache2 owner
+  when: webserver == "apache"
+  file: path=/var/lock/apache2 recurse=yes state=directory group={{ webserver_group }} owner={{ webserver_user }}
+  become: yes
+
+- name: Set Apache user and group
+  when: webserver == "apache"
+  lineinfile: >
+    dest=/etc/apache2/envvars
+    regexp="{{ item.key }}"
+    line="{{ item.value }}"
+    state=present
+  with_items:
+   - { key: "^export APACHE_RUN_USER=", value: "export APACHE_RUN_USER={{ webserver_user }}" }
+   - { key: "^export APACHE_RUN_GROUP=", value: "export APACHE_RUN_GROUP={{ webserver_group }}" }
+  notify:
+   - apache-restart
+  become: yes
+
+- name: Apache | Enable modules
+  when: webserver == "apache"
+  command: a2enmod {{ item }} creates=/etc/apache2/mods-enabled/{{ item }}.load
+  with_items:
+    - rewrite
+    - autoindex
+    - ssl
+  become: yes
+  notify:
+  - apache-restart
+
+- name: Delete default Apache vhost
+  when: webserver == "apache"
+  file: path=/etc/apache2/sites-enabled/000-default.conf state=absent
+  become: yes
+  notify: apache-restart
+
+- name: Push default virtualhost configuration template
+  when: webserver == "apache"
+  template:
+    src=default_virtualhost.conf.j2
+    dest=/etc/apache2/sites-available/default-vhost.conf
+  notify:
+    - apache-restart
+  become: yes
+
+- name: Create ssl directory
+  when: webserver == "apache"
+  file: path=/etc/apache2/ssl state=directory group={{ webserver_group }} owner={{ webserver_user }}
+  become: yes
+
+- name: create self-signed SSL cert
+  when: webserver == "apache"
+  command: openssl req -new -nodes -x509 -subj "/C=US/ST=Oregon/L=Portland/O=IT/CN=${ansible_fqdn}" -days 3650 -keyout /etc/apache2/ssl/server.key -out /etc/apache2/ssl/server.crt -extensions v3_ca creates=/etc/apache2/ssl/server.crt
+
+- name: Apache | Enable Sites
+  when: webserver == "apache"
+  command: a2ensite {{ item }}
+  args:
+      creates: /etc/apache2/sites-enabled/{{ item }}.conf
+  with_items:
+    - default-vhost
+  become: yes
+  notify:
+  - apache-reload
+
+- name: Configure PHP
+  when: webserver == "apache"
+  template: src={{ item.template }} dest=/etc/php/{{ item.phpversion }}/apache2/conf.d/{{ item.file }} owner=root group=root mode=0644
+  with_items:
+    - { file: '99-debug.ini', phpversion: '7.0', template: '../../common/templates/99-debug.ini'}
+  become: yes
+  notify:
+    - apache-restart
+
+- name: Set PHP version
+  when: webserver == "apache"
+  command: /home/vagrant/bin/changephp_apache_7.0.sh
+  become: yes
+
+- name: be sure apache is started and enabled
+  when: webserver == "apache"
+  service: name=apache2 state=started enabled=yes
+  become: yes

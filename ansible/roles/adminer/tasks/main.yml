@@ -1,0 +1,12 @@
+---
+
+- name: Get Adminer
+  get_url:
+    url: https://github.com/vrana/adminer/releases/download/v4.6.2/adminer-4.6.2.php
+    dest: /tmp
+  tags: ioncube
+
+- name: Copy Adminer
+  copy:
+    src: "/tmp/adminer-4.6.2.php"
+    dest: "{{ webserver_root }}/adminer.php"

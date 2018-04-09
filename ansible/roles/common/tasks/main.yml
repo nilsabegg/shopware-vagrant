@@ -34,7 +34,6 @@
     - tmux
     - default-jre
     - default-jdk
-    - expect
 
 - name: install Virtual Box Guest Additions
   shell: apt-get install -y -t stretch-backports virtualbox-guest-dkms linux-headers-$(uname -r)

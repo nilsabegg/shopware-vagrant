@@ -9,10 +9,9 @@ git clone https://github.com/nilsabegg/shopware-vagrant.git
 cd shopware-vagrant
 vagrant up
 ```
-After your first successful boot you have to uncomment the line in your Vagrantfile to mount the shared folder and reload your box.
 
-```
-vagrant reload
+```bash
+vagrant ssh
 ```
 
 ## Change Shopware version ##

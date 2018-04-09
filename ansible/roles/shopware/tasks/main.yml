@@ -6,6 +6,7 @@
     state: directory
     owner: "{{ webserver_user }}"
     group: "{{ webserver_group }}"
+    force: yes
   become: yes
   with_items:
     - custom/plugins
@@ -23,6 +24,7 @@
     - themes/Frontend
 
 - name: Remove Shopware Source
+  become: yes
   shell: rm -rf {{ webserver_root }}/../shopware
 
 - name: Clone Shopware
@@ -33,9 +35,15 @@
   with_items:
     - git checkout tags/{{ shopware_version }}
 
-- name: Create symlinks for the Shopware core files in your shopware folder in the webserver_root path
-  shell: "yes | ln -sfF {{ webserver_root }}/../shopware/{{ item }} chdir={{ webserver_root }}/shopware"
+- name: Create symflinks for the Shopware source files and folders
   become: yes
+  file:
+    src: "/home/vagrant/shopware/{{ item }}"
+    dest: "/home/vagrant/www/shopware/{{ item }}"
+    state: link
+    group: "{{ webserver_group }}"
+    owner: "{{ webserver_user }}"
+    force: yes
   with_items:
     - _sql
     - bin
@@ -46,7 +54,7 @@
     - media/.htaccess
     - media/temp/.htaccess
     - recovery
-    - test
+    - tests
     - themes/Backend
     - themes/Frontend/Bare
     - themes/Frontend/Responsive
@@ -57,9 +65,29 @@
     - autoload.php
     - shopware.php
 
-- name: Set file permissions for Shopware
-  command: chmod -R 755 {{ item }} chdir={{ webserver_root }}/shopware
+# - name: Set file permissions for Shopware document root
+#   file:
+#     path: "{{ webserver_root }}/shopware/{{ item }}"
+#     mode: 0775
+#     state: directory
+#     force: yes
+#     recurse: yes
+#   become: yes
+#   with_items:
+#     - var
+#     - web
+#     - files
+#     - media
+#     - engine/Shopware/Plugins/Community
+
+- name: Set file permissions for Shopware source
   become: yes
+  file:
+    path: "{{ webserver_root }}/../shopware/{{ item }}"
+    mode: 0775
+    state: directory
+    force: yes
+    recurse: yes
   with_items:
     - var
     - web
@@ -67,14 +95,34 @@
     - media
     - engine/Shopware/Plugins/Community
 
-- name: copy configure.answer file
-  template: src=configure.answer dest={{ webserver_root }}/../bin/configure.answer owner=vagrant mode=0775
+- name: Copy build.properties file
+  when: shopware_install == "demo" || shopware_install == "clean"
+  template: src=build.properties dest={{ webserver_root }}/../shopware/build/build.properties owner=vagrant mode=0775
+  become: yes
+
+- name: Create shopware db
+  when: dbms == "mysql"
+  mysql_db: name=shopware state=present
+  become: yes
+
+- name: Create shopware db user
+  when: dbms == "mysql"
+  mysql_user: name={{ shopware_db_username}} password={{ shopware_db_password}} priv={{ shopware_db_name }}.*:ALL state=present
   become: yes
 
 - name: Build Shopware
+  when: shopware_install == "demo" || shopware_install == "clean"
   shell: "{{ item }} chdir={{ webserver_root }}/../shopware/build"
   become: yes
   with_items:
-#    - "ant configure <<< 'localhost\n3306\nshopware\nshopware\nshopware\n{{ ansible_fqdn }}\n\n'"
-    - ~/bin/configure.answer
     - ant build-unit
+
+- name: Create symflinks for the Shopware source files and folders
+  file:
+    src: "/home/vagrant/shopware/{{ item }}"
+    dest: "/home/vagrant/www/shopware/{{ item }}"
+    state: link
+    owner: "{{ webserver_user }}"
+    group: "{{ webserver_group }}"
+  with_items:
+    - config.php

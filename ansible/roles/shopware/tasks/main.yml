@@ -22,11 +22,11 @@
     - media/video
     - themes/Frontend
 
-# - name: Remove Shopware Source
-#   shell: rm -rf {{ webserver_root }}/../shopware
+- name: Remove Shopware Source
+  shell: rm -rf {{ webserver_root }}/../shopware
 
-# - name: Clone Shopware
-#   shell: git clone https://github.com/shopware/shopware.git {{ webserver_root }}/../shopware
+- name: Clone Shopware
+  shell: git clone https://github.com/shopware/shopware.git {{ webserver_root }}/../shopware
 
 - name: Update Shopware repository and checkout your desired version.
   command: "{{ item }} chdir={{ webserver_root }}/../shopware"

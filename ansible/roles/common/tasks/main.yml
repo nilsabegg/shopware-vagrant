@@ -32,6 +32,9 @@
     - wget
     - ant
     - tmux
+    - default-jre
+    - default-jdk
+    - expect
 
 - name: install Virtual Box Guest Additions
   shell: apt-get install -y -t stretch-backports virtualbox-guest-dkms linux-headers-$(uname -r)
@@ -60,6 +63,6 @@
   copy: src={{ item }} dest=~/bin/  mode=755
   with_fileglob:
     - bin/*
-    
+
 - name: Changing perm of "/home/vagrant/bin/changephp_apache_7.0.sh", adding "+x"
   file: dest=/home/vagrant/bin/changephp_apache_7.0.sh mode=a+x

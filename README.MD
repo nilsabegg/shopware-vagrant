@@ -16,6 +16,6 @@ vagrant reload
 ```
 
 ## Change Shopware version ##
-To change your Shopware version you can set the "shopware_version" variable to any tag of the official Shopware repository.
+To change your Shopware version you can set the "shopware_version" variable to any tag of the official Shopware repository. https://github.com/shopware/shopware
 
 

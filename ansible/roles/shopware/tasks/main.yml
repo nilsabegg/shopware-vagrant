@@ -96,7 +96,7 @@
     - engine/Shopware/Plugins/Community
 
 - name: Copy build.properties file
-  when: shopware_install == "demo" || shopware_install == "clean"
+  when: shopware_install == "demo" or shopware_install == "clean"
   template: src=build.properties dest={{ webserver_root }}/../shopware/build/build.properties owner=vagrant mode=0775
   become: yes
 
@@ -111,7 +111,7 @@
   become: yes
 
 - name: Build Shopware
-  when: shopware_install == "demo" || shopware_install == "clean"
+  when: shopware_install == "demo" or shopware_install == "clean"
   shell: "{{ item }} chdir={{ webserver_root }}/../shopware/build"
   become: yes
   with_items:
